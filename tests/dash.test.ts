@@ -13,7 +13,7 @@ test('the dashboard draws stats, the hint and the scene under the prompt', async
     props: HINT,
     viewport: { columns: 140, rows: 40 },
   })
-  expect(await ui.find({ type: 'Text', text: 'ctx' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: 'context' })).toBeDefined()
   expect(await ui.find({ type: 'Text', text: '? for shortcuts' })).toBeDefined()
   expect(await ui.find({ key: 'scene' })).toBeDefined()
   await ui.unmount()
@@ -27,7 +27,7 @@ test('a narrow terminal drops the scene but keeps the stats', async $ => {
     props: HINT,
     viewport: { columns: 70, rows: 40 },
   })
-  expect(await ui.find({ type: 'Text', text: 'ctx' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: 'context' })).toBeDefined()
   expect(await ui.find({ key: 'scene' })).toBeUndefined()
   await ui.unmount()
 })

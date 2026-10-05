@@ -157,7 +157,7 @@ export const register: Register = on => {
             {!s.fiveHour && !s.sevenDay ? <Text color={COLOR.dim}>no plan limits reported yet</Text> : null}
           </Box>
           <Box gap={1}>
-            <Text color={COLOR.dim}>ctx</Text>
+            <Text color={COLOR.dim}>context</Text>
             <Text color={level(ctx)}>{ctxBar.on}</Text>
             <Text color={COLOR.faint}>{ctxBar.off}</Text>
             <Text bold color={COLOR.text}>{`${Math.round(ctx)}%`}</Text>

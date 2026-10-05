@@ -1,6 +1,6 @@
 {
   "name": "clawd-dash",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Session dashboard under the composer: usage limits, context, cost, model, effort, file changes, and an animated Clawd.",
   "author": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
   "license": "Apache-2.0",

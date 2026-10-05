@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.1 - October 5, 2026
+
+### 🎨 Dashboard
+
+- The context row is now labeled `context` instead of `ctx`
+
+### 📦 Install
+
+- Added a `pinkpixel` plugin marketplace, so clawd-dash installs with `/plugin install clawd-dash@pinkpixel`
+
 ## 0.1.0 - October 5, 2026
 
 ### ✨ First version
