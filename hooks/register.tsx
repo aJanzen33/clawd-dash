@@ -2,7 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { Register, SessionMeasureInput } from 'claude-code'
 
 import type { Limit, Mood, Stats } from '../types'
-import { COLOR, bar, level, modelName, ring, tokens, until, usd } from './format'
+import { columnsFor, statsGrid } from './dash'
+import { readGit } from './git'
 import { rasterize } from './raster'
 import { DONE_SECONDS, sceneSvg } from './scene'
 
@@ -24,9 +25,15 @@ const SCALE = 4
 const SCENE_COLS = 36
 const SCENE_ROWS = 4
 const MIN_COLS_FOR_SCENE = 90
+// Room left of the dash for Claude Code's own mode label ("auto mode on ·").
+const MODE_LABEL_COLS = 20
+// Keeps the uptime and reset countdowns current between stat changes.
+const CLOCK_MS = 15_000
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit'])
+// Tools after which the working tree may have changed.
+const GIT_TOOLS = new Set([...EDIT_TOOLS, 'Bash'])
 
-const stats = atom({ plugin: 'clawd-dash', key: 'stats' } as const, { added: 0, removed: 0, files: [] } as Stats)
+const stats = atom({ plugin: 'clawd-dash', key: 'stats' } as const, { added: 0, removed: 0, files: [], tools: 0 } as Stats)
 
 let mood: Mood = 'idle'
 let moodAt = Date.now()
@@ -64,8 +71,24 @@ function fromUsage(u: Omit<SessionMeasureInput, 'changed'>): Partial<Stats> {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     moodAt = Date.now()
-    const [usage, model] = await Promise.all([$.session.usage(), $.session.model()])
-    await update($, stats, s => ({ ...s, ...fromUsage(usage), model }))
+    const [usage, model, prompts, version, git] = await Promise.all([
+      $.session.usage(),
+      $.session.model(),
+      $.session.turns(),
+      $.session.version(),
+      readGit(argv => $.process.run(argv)),
+    ])
+    await update($, stats, s => ({
+      ...s,
+      ...fromUsage(usage),
+      model,
+      prompts,
+      version: version.base ?? version.version,
+      startedAt: usage.startedAt,
+      git,
+    }))
+
+    $.clock.every(CLOCK_MS, () => $.ui.invalidate('ui.render'))
 
     let busy = false
     $.clock.every(FRAME_MS, () => {
@@ -85,13 +108,19 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('turn.start', ($, e, next) => {
+  on('turn.start', async ($, e, next) => {
     setMood('working')
+    const prompts = await $.session.turns()
+    await update($, stats, s => ({ ...s, prompts }))
     return next(e)
   })
 
-  on('turn.complete', ($, e, next) => {
-    if (!e.agentId) setMood('done')
+  on('turn.complete', async ($, e, next) => {
+    if (!e.agentId) {
+      setMood('done')
+      const git = await readGit(argv => $.process.run(argv))
+      await update($, stats, s => ({ ...s, lastTurnMs: e.durationMs, git }))
+    }
     return next(e)
   })
 
@@ -105,7 +134,13 @@ export const register: Register = on => {
 
   on('tool.call', async ($, e, next) => {
     const res = await next(e)
-    if (!EDIT_TOOLS.has(String(e.tool)) || res.result === undefined || res.isError) return res
+    const tool = String(e.tool)
+    await update($, stats, s => ({ ...s, tools: s.tools + 1 }))
+    if (GIT_TOOLS.has(tool)) {
+      const git = await readGit(argv => $.process.run(argv))
+      await update($, stats, s => ({ ...s, git }))
+    }
+    if (!EDIT_TOOLS.has(tool) || res.result === undefined || res.isError) return res
 
     const r = res.result as { filePath?: string; type?: string; content?: string; structuredPatch?: { lines: string[] }[] }
     let added = 0
@@ -129,52 +164,18 @@ export const register: Register = on => {
 
   on('ui.render', { component: SITE }, async ($, e, next) => {
     if (e.surface !== 'terminal') return next(e)
-    const { Box, Text, Image } = $.ui.resolve(e)
+    const el = $.ui.resolve(e)
+    const { Box, Text, Image } = el
     const s = await read($, stats)
-    const now = Date.now()
-    const showScene = (e.viewport?.columns ?? 120) >= MIN_COLS_FOR_SCENE
+    const cols = e.viewport?.columns ?? 120
+    const showScene = cols >= MIN_COLS_FOR_SCENE
     site = showScene ? e.requestId : undefined
-
-    const limit = (label: string, l: Limit | undefined) =>
-      l ? (
-        <Box gap={1}>
-          <Text color={level(l.percent)}>{ring(l.percent)}</Text>
-          <Text bold color={COLOR.text}>{`${Math.round(l.percent)}%`}</Text>
-          <Text color={COLOR.dim}>{`${label} · resets ${until(l.resetsAt, now)}`}</Text>
-        </Box>
-      ) : null
-
-    const ctx = s.contextPercent ?? 0
-    const ctxBar = bar(ctx)
-    const fileCount = s.files.length
+    const room = cols - MODE_LABEL_COLS - (showScene ? SCENE_COLS + 2 : 0)
 
     return (
       <Box flexDirection="row" gap={2}>
         <Box flexDirection="column" flexGrow={1} flexShrink={1}>
-          <Box gap={3}>
-            {limit('5h', s.fiveHour)}
-            {limit('7d', s.sevenDay)}
-            {!s.fiveHour && !s.sevenDay ? <Text color={COLOR.dim}>no plan limits reported yet</Text> : null}
-          </Box>
-          <Box gap={1}>
-            <Text color={COLOR.dim}>context</Text>
-            <Text color={level(ctx)}>{ctxBar.on}</Text>
-            <Text color={COLOR.faint}>{ctxBar.off}</Text>
-            <Text bold color={COLOR.text}>{`${Math.round(ctx)}%`}</Text>
-            <Text color={COLOR.dim}>
-              {s.contextTokens !== undefined && s.contextWindow ? `${tokens(s.contextTokens)}/${tokens(s.contextWindow)}` : ''}
-            </Text>
-            <Text color={COLOR.dim}>·</Text>
-            <Text color={COLOR.text}>{usd(s.costUsd ?? 0)}</Text>
-          </Box>
-          <Box gap={1}>
-            <Text bold color={COLOR.accent}>{s.model ? modelName(s.model) : '…'}</Text>
-            <Text color={COLOR.dim}>{s.effort ? `· ${s.effort}` : ''}</Text>
-            <Text color={COLOR.dim}>·</Text>
-            <Text color={COLOR.ok}>{`+${s.added}`}</Text>
-            <Text color={COLOR.bad}>{`−${s.removed}`}</Text>
-            <Text color={COLOR.dim}>{`${fileCount} ${fileCount === 1 ? 'file' : 'files'}`}</Text>
-          </Box>
+          {statsGrid(el, s, columnsFor(room), Date.now())}
           <Text dimColor wrap="truncate">{e.props.hint}</Text>
         </Box>
         {showScene ? (

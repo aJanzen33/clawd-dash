@@ -2,18 +2,32 @@
 
 ![clawd-dash](https://raw.githubusercontent.com/pinkpixel-dev/clawd-dash/refs/heads/main/demo.gif)
 
-clawd-dash is a Claude Code mod that puts a little session dashboard under the prompt: plan limits, context, cost, model, effort, and file changes, with an animated pixel Clawd on the right that reacts to what Claude is doing.
+clawd-dash is a Claude Code mod that puts a little session dashboard under the prompt: plan limits, context, cost, model, effort, session stats, git status, and file changes, with an animated pixel Clawd on the right that reacts to what Claude is doing.
 
 ## What it shows
 
-- **5h and 7d plan limits** as a small ring, the percent used, and when each window resets
-- **Context** as a bar with the percent full and tokens used out of the window (like `84k/200k`)
-- **Session cost** in dollars
-- **Model and effort** for the current session (like `Opus 5.5 · high`)
-- **File changes**: lines added and removed, plus how many files Claude has edited or written
-- **The normal hint line** (`? for shortcuts`, `esc to interrupt`) stays as the last row, so you don't lose it
+The stats sit in three columns that spread out to fill the space between the hint text and the crab.
 
-The colors change at 50% (yellow) and 80% (red), and the numbers are always shown too, so you're not reading status from color alone.
+**Limits**
+
+- **5h and 7d plan limits** as a block gauge, the percent used, and when each window resets (`↻ 44m`)
+- **Context** as the same kind of gauge, with the percent full and tokens used out of the window (like `84k/200k`)
+
+**Session**
+
+- **Model and effort** (like `Opus 5.5 · high`)
+- **Cost** in dollars, how long the session has been up, and how long the last turn took
+- **Prompts** you've sent and **tool calls** Claude has made
+
+**Repo**
+
+- **Git branch**, with `↑`/`↓` for commits ahead of or behind the remote, and `●3` for three changed files (or `✓` when the tree is clean)
+- **File changes**: lines added and removed, plus how many files Claude has edited or written
+- **The Claude Code version**
+
+**The normal hint line** (`? for shortcuts`, `esc to interrupt`) stays as the last row, so you don't lose it.
+
+The gauges turn yellow at 50% and red at 80%, and the numbers are always shown too, so you're not reading status from color alone. On narrower terminals the columns drop from the right: repo goes first, then session.
 
 ## The mascot
 
@@ -74,9 +88,10 @@ To turn it off, remove the folder from that setting, or start Claude Code with `
 
 ## Good to know
 
-- Mods run with your permissions. This one only reads usage numbers, the session model, and the results of Claude's `Edit`/`Write`/`MultiEdit`/`NotebookEdit` calls. It doesn't touch files, run processes, or make network requests. You can check that yourself with `claude plugin validate .`, which lists every hook and call the mod makes.
+- Mods run with your permissions. This one reads usage numbers, session info (model, prompt count, version), and the results of Claude's `Edit`/`Write`/`MultiEdit`/`NotebookEdit` calls. The only process it runs is `git status --porcelain=v1 --branch`, at session start, after each `Bash` or edit tool call, and when a turn finishes. It doesn't write files or make network requests. You can check that yourself with `claude plugin validate .`, which lists every hook and call the mod makes.
 - Effort shows up after your first message, since it comes from the first model request.
-- The file change counter starts over whenever the mod reloads (for example, while you're editing it).
+- The file change and tool call counters start over whenever the mod reloads (for example, while you're editing it).
+- The tool call count includes calls made by subagents.
 - On terminals narrower than 90 columns, the crab hides and the stats stay.
 - The dashboard only draws in the terminal. In the Desktop app and the VS Code panel, you get the normal hint line.
 
@@ -84,7 +99,9 @@ To turn it off, remove the folder from that setting, or start Claude Code with `
 
 The mod is a few small TypeScript files in `hooks/`:
 
-- `register.tsx` hooks into Claude Code's events. `session.measure` feeds the usage numbers, `turn.start` and `turn.complete` switch the mood, `turn.step` picks up the model and effort, and `tool.call` counts lines from edit results. A `ui.render` hook on `PromptHint` draws the dashboard in the hint row under the prompt.
+- `register.tsx` hooks into Claude Code's events. `session.measure` feeds the usage numbers, `turn.start` and `turn.complete` switch the mood and update the prompt count, last turn time, and git status, `turn.step` picks up the model and effort, and `tool.call` counts tool calls and lines from edit results. A `ui.render` hook on `PromptHint` draws the dashboard in the hint row under the prompt.
+- `dash.tsx` builds the three stat columns and decides how many fit.
+- `git.ts` runs `git status` and reads the branch, ahead/behind counts, and changed files out of it.
 - `scene.ts` draws each animation frame of a mood as a 100x18 pixel SVG.
 - `raster.ts` turns that SVG into RGBA pixels, crops off the mostly empty left side, and scales it up 4x so it stays crisp. The terminal can't draw SVG, but it can draw an `Image`.
 - A timer repaints the crab about 8 times a second with `$.ui.blit`, which swaps the picture without redrawing the rest of the dashboard.
@@ -105,7 +122,7 @@ Run the tests:
 claude plugin test .
 ```
 
-The tests render the dashboard at a wide and a narrow width and make sure every mood actually draws the mascot.
+The tests render the dashboard at a few widths, check the column breakpoints, the gauge, and git status parsing, and make sure every mood actually draws the mascot.
 
 When Claude Code loads the mod from this folder, it writes type declarations into `.claude-plugin/types/`, and `tsconfig.json` extends them. After one load, `npx -p typescript tsc -p .` type-checks the mod. That folder is generated, so it's in `.gitignore`.
 

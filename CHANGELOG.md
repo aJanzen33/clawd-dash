@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.0 - October 5, 2026
+
+### 🎨 Dashboard
+
+- The stats now spread across three columns (limits, session, repo) that share the width between the hint text and the crab, with thin dividers between them
+- Every label and value has its own color, so the rows are easier to scan
+- The 5h, 7d, and context rows use smooth block gauges that fill in eighth-cell steps, colored green, yellow, or red by how full they are
+- Columns drop from the right on narrower terminals: repo first, then session
+
+### ✨ New stats
+
+- Session uptime and how long the last turn took
+- Prompts sent and tool calls made this session
+- Git branch, commits ahead and behind, and the number of changed files (or a check mark when it's clean)
+- The Claude Code version
+- The uptime and reset countdowns refresh every 15 seconds
+
+### 🧪 Tests
+
+- Added tests for the three-column layout, the column breakpoints, the gauge, elapsed time, and git status parsing
+
 ## 0.1.1 - October 5, 2026
 
 ### 🎨 Dashboard
