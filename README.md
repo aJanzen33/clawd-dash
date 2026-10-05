@@ -1,10 +1,8 @@
 # clawd-dash
 
-![clawd-dash](https://raw.githubusercontent.com/sizzlebop/clawd-dash/refs/heads/main/demo.gif)
+![clawd-dash](https://raw.githubusercontent.com/pinkpixel-dev/clawd-dash/refs/heads/main/demo.gif)
 
 clawd-dash is a Claude Code mod that puts a little session dashboard under the prompt: plan limits, context, cost, model, effort, and file changes, with an animated pixel Clawd on the right that reacts to what Claude is doing.
-
-I made it because I kept running `/cost` and `/context` and glancing at the status line just to answer "how much do I have left?" I wanted all of it in one spot I could see without asking, and honestly the crab makes it a lot more fun to look at.
 
 ## What it shows
 
@@ -36,9 +34,25 @@ Clawd has four moods, and each one cycles through a few little scenes:
 
 ## Install
 
-clawd-dash isn't in a marketplace yet, so you load it from this folder.
+This repo is also a small plugin marketplace called `pinkpixel`, so you can install it straight from GitHub. Inside Claude Code:
 
-To try it for one session:
+```
+/plugin marketplace add pinkpixel-dev/clawd-dash
+/plugin install clawd-dash@pinkpixel
+```
+
+Or from your shell:
+
+```bash
+claude plugin marketplace add pinkpixel-dev/clawd-dash
+claude plugin install clawd-dash@pinkpixel
+```
+
+Run `/plugin` and you should see `clawd-dash` in the `mods active` line under the tabs. To pick up new versions later, run `claude plugin marketplace update pinkpixel`.
+
+### Load it from a local folder
+
+If you've cloned the repo and want to hack on it, you can load it from the folder instead. To try it for one session:
 
 ```bash
 claude --plugin-dir /home/sizzlebop/PINKPIXEL/PROJECTS/CURRENT/clawd-dash

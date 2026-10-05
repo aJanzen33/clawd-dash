@@ -1,0 +1,12 @@
+{
+  "name": "pinkpixel",
+  "description": "Claude Code mods by Pink Pixel",
+  "owner": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
+  "plugins": [
+    {
+      "name": "clawd-dash",
+      "source": "./",
+      "description": "Session dashboard under the composer: usage limits, context, cost, model, effort, file changes, and an animated Clawd."
+    }
+  ]
+}
