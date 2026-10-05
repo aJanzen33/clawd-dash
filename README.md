@@ -1,5 +1,7 @@
 # clawd-dash
 
+![clawd-dash](https://raw.githubusercontent.com/sizzlebop/clawd-dash/refs/heads/main/demo.gif)
+
 clawd-dash is a Claude Code mod that puts a little session dashboard under the prompt: plan limits, context, cost, model, effort, and file changes, with an animated pixel Clawd on the right that reacts to what Claude is doing.
 
 I made it because I kept running `/cost` and `/context` and glancing at the status line just to answer "how much do I have left?" I wanted all of it in one spot I could see without asking, and honestly the crab makes it a lot more fun to look at.
