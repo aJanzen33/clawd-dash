@@ -1,6 +1,6 @@
 {
   "name": "clawd-dash",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Session dashboard under the prompt: usage limits, context, cost, model, effort, session stats, git status, file changes, and an animated Clawd.",
   "author": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
   "license": "Apache-2.0",
@@ -17,6 +17,13 @@
       "title": "Context warning (tokens)",
       "description": "From this many context tokens the context gauge turns red and suggests a fresh session; 0 turns the warning off.",
       "default": 600000
+    },
+    "clearButton": {
+      "type": "string",
+      "title": "Clear button",
+      "description": "A clear button beside the hint under the prompt that runs /clear: confirm asks for a second press within 4 seconds, direct runs it at once, off hides it.",
+      "options": ["confirm", "direct", "off"],
+      "default": "confirm"
     }
   }
 }

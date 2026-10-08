@@ -68,6 +68,8 @@ A **models** column lists the tokens each model answered with this session, suba
 
 Past 600k context tokens the context gauge turns red and suggests a fresh session; set **Context warning (tokens)** (`clawd-dash.contextWarnTokens`) in `/config` to move the mark, or to 0 to turn it off.
 
+A **⌫ clear** button beside the hint runs `/clear`. The first press arms it (`clear? click again`) for 4 seconds, the second runs it; set **Clear button** (`clawd-dash.clearButton`) in `/config` to `direct` to skip the second press, or `off` to hide it.
+
 To hide the animated Clawd and keep only the stats, turn off **Show Clawd** (`clawd-dash.showClawd`) in `/config`.
 
 ### Load it from a local folder

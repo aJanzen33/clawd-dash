@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, SessionMeasureInput } from 'claude-code'
+import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code'
 
 import type { Limit, Mood, Stats } from '../types'
 import { columnsFor, statsGrid } from './dash'
@@ -30,6 +30,8 @@ const MIN_COLS_FOR_SCENE = 90
 const MODE_LABEL_COLS = 20
 // Keeps the uptime and reset countdowns current between stat changes.
 const CLOCK_MS = 15_000
+// How long the clear button waits for its second press.
+const CLEAR_ARMED_MS = 4_000
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit'])
 // Tools after which the working tree may have changed.
 const GIT_TOOLS = new Set([...EDIT_TOOLS, 'Bash'])
@@ -69,9 +71,33 @@ function fromUsage(u: Omit<SessionMeasureInput, 'changed'>): Partial<Stats> {
   }
 }
 
+// The clear button's mode from the settings; register sets it on every load.
+let clearButton: 'confirm' | 'direct' | 'off' = 'confirm'
+// /clear drops the conversation, so in confirm mode the first press only arms the button for a moment.
+let isClearArmed = false
+
+async function pressClear($: EngineInterface) {
+  if (clearButton === 'confirm' && !isClearArmed) {
+    isClearArmed = true
+    $.ui.invalidate('ui.render')
+    void $.clock.sleep(CLEAR_ARMED_MS).then(
+      () => {
+        isClearArmed = false
+        $.ui.invalidate('ui.render')
+      },
+      // A reload or the session's end cancels the wait; the next load starts unarmed.
+      () => {},
+    )
+    return
+  }
+  isClearArmed = false
+  await $.command.run({ command: 'clear' })
+}
+
 export const register: Register = (on, options) => {
   const showClawd = options.showClawd !== false
   const warnTokens = typeof options.contextWarnTokens === 'number' ? options.contextWarnTokens : 600_000
+  clearButton = options.clearButton === 'direct' || options.clearButton === 'off' ? options.clearButton : 'confirm'
 
   on('session.start', async ($, e, next) => {
     moodAt = Date.now()
@@ -172,7 +198,7 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: SITE }, async ($, e, next) => {
     if (e.surface !== 'terminal') return next(e)
     const el = $.ui.resolve(e)
-    const { Box, Text, Image } = el
+    const { Box, Button, Text, Image } = el
     const s = await read($, stats)
     const cols = e.viewport?.columns ?? 120
     const showScene = showClawd && cols >= MIN_COLS_FOR_SCENE
@@ -183,7 +209,20 @@ export const register: Register = (on, options) => {
       <Box flexDirection="row" gap={2}>
         <Box flexDirection="column" flexGrow={1} flexShrink={1}>
           {statsGrid(el, s, columnsFor(room), Date.now(), warnTokens)}
-          <Text dimColor wrap="truncate">{e.props.hint}</Text>
+          <Box flexDirection="row" columnGap={2}>
+            <Box flexShrink={1}>
+              <Text dimColor wrap="truncate">{e.props.hint}</Text>
+            </Box>
+            {clearButton === 'off' ? null : (
+              <Button
+                key="clear"
+                label={isClearArmed ? 'clear? click again' : '⌫ clear'}
+                plain
+                {...(isClearArmed ? {} : { dimColor: true })}
+                onPress={() => void pressClear($)}
+              />
+            )}
+          </Box>
         </Box>
         {showScene ? (
           <Image key="scene" source={frame()} columns={SCENE_COLS} rows={SCENE_ROWS} alt={`clawd ${mood}`} />

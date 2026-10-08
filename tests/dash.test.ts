@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 
 import { columnsFor, contextOver } from '../hooks/dash'
 import { elapsed, gauge } from '../hooks/format'
@@ -136,4 +136,50 @@ test('the context warning starts past the mark and 0 turns it off', () => {
   expect(contextOver(s(600_001), 600_000)).toBe(true)
   expect(contextOver(s(900_000), 0)).toBe(false)
   expect(contextOver({ added: 0, removed: 0, files: [], tools: 0 }, 600_000)).toBe(false)
+})
+
+test('the clear button asks for a second press within 4 seconds, then runs /clear', async ($, on) => {
+  const clock = mock.clock(on, { now: Date.parse('2026-10-08T20:00:00Z') })
+  const ran: string[] = []
+  on('command.run', ($, e) => {
+    ran.push(e.command)
+
+    return { text: '' }
+  })
+  const ui = await $.ui.mount({
+    plugin: 'clawd-dash',
+    surface: 'terminal',
+    component: 'PromptHint',
+    props: HINT,
+    viewport: { columns: 140, rows: 40 },
+  })
+  expect((await ui.find({ key: 'clear' }))?.text).toBe('⌫ clear')
+  await ui.press({ key: 'clear' })
+  expect(ran).toEqual([])
+  expect((await ui.find({ key: 'clear' }))?.text).toBe('clear? click again')
+  await clock.advance(4_100)
+  expect((await ui.find({ key: 'clear' }))?.text).toBe('⌫ clear')
+  await ui.press({ key: 'clear' })
+  await ui.press({ key: 'clear' })
+  expect(ran).toEqual(['clear'])
+  await ui.unmount()
+})
+
+test('clearButton direct runs /clear at once; off hides the button', { options: { clearButton: 'direct' } }, async ($, on) => {
+  const ran: string[] = []
+  on('command.run', ($, e) => {
+    ran.push(e.command)
+
+    return { text: '' }
+  })
+  const ui = await $.ui.mount({ plugin: 'clawd-dash', surface: 'terminal', component: 'PromptHint', props: HINT, viewport: { columns: 140, rows: 40 } })
+  await ui.press({ key: 'clear' })
+  expect(ran).toEqual(['clear'])
+  await ui.unmount()
+})
+
+test('clearButton off hides the button', { options: { clearButton: 'off' } }, async $ => {
+  const ui = await $.ui.mount({ plugin: 'clawd-dash', surface: 'terminal', component: 'PromptHint', props: HINT, viewport: { columns: 140, rows: 40 } })
+  expect(await ui.find({ key: 'clear' })).toBeUndefined()
+  await ui.unmount()
 })
