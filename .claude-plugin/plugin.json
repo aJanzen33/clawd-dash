@@ -1,6 +1,6 @@
 {
   "name": "clawd-dash",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Session dashboard under the prompt: usage limits, context, cost, model, effort, session stats, git status, file changes, and an animated Clawd.",
   "author": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
   "license": "Apache-2.0",
@@ -11,6 +11,12 @@
       "title": "Show Clawd",
       "description": "Draw the animated Clawd to the right of the dashboard.",
       "default": true
+    },
+    "contextWarnTokens": {
+      "type": "number",
+      "title": "Context warning (tokens)",
+      "description": "From this many context tokens the context gauge turns red and suggests a fresh session; 0 turns the warning off.",
+      "default": 600000
     }
   }
 }

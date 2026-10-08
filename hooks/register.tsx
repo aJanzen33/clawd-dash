@@ -71,6 +71,7 @@ function fromUsage(u: Omit<SessionMeasureInput, 'changed'>): Partial<Stats> {
 
 export const register: Register = (on, options) => {
   const showClawd = options.showClawd !== false
+  const warnTokens = typeof options.contextWarnTokens === 'number' ? options.contextWarnTokens : 600_000
 
   on('session.start', async ($, e, next) => {
     moodAt = Date.now()
@@ -181,7 +182,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="row" gap={2}>
         <Box flexDirection="column" flexGrow={1} flexShrink={1}>
-          {statsGrid(el, s, columnsFor(room), Date.now())}
+          {statsGrid(el, s, columnsFor(room), Date.now(), warnTokens)}
           <Text dimColor wrap="truncate">{e.props.hint}</Text>
         </Box>
         {showScene ? (

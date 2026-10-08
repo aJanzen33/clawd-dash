@@ -24,7 +24,11 @@ export function columnsFor(cols: number) {
   return 1
 }
 
-export function statsGrid({ Box, Text }: El, s: Stats, columns: number, now: number) {
+// Past `warnTokens` context tokens (0: never) the context gauge turns red and suggests a fresh session.
+export const contextOver = (s: Stats, warnTokens: number) =>
+  warnTokens > 0 && (s.contextTokens ?? 0) > warnTokens
+
+export function statsGrid({ Box, Text }: El, s: Stats, columns: number, now: number, warnTokens = 0) {
   const row = (key: string, ...parts: (JSX.Element | null)[]) => (
     <Box key={key} gap={1} flexWrap="nowrap" overflow="hidden">{parts}</Box>
   )
@@ -37,9 +41,9 @@ export function statsGrid({ Box, Text }: El, s: Stats, columns: number, now: num
   )
   const dot = <Text color={COLOR.faint}>·</Text>
 
-  const meter = (label: string, labelColor: string, p: number, extra: JSX.Element | null) => {
+  const meter = (label: string, labelColor: string, p: number, extra: JSX.Element | null, color?: string) => {
     const g = gauge(p, BAR_CELLS)
-    const c = level(p)
+    const c = color ?? level(p)
     return row(
       label,
       <Text bold color={labelColor}>{label.padEnd(7)}</Text>,
@@ -64,16 +68,24 @@ export function statsGrid({ Box, Text }: El, s: Stats, columns: number, now: num
       : row(label, <Text bold color={labelColor}>{label.padEnd(7)}</Text>, <Text color={COLOR.dim}>waiting for first reading</Text>)
 
   const ctx = s.contextPercent ?? 0
+  const over = contextOver(s, warnTokens)
   const limits = (
     <Box key="limits" flexDirection="column" minWidth={LIMITS_W} flexGrow={1} flexShrink={0}>
       {limit('5h', COLOR.sky, s.fiveHour)}
       {limit('7d', COLOR.violet, s.sevenDay)}
-      {meter('context', COLOR.teal, ctx, s.contextTokens !== undefined && s.contextWindow ? (
-        <Box>
-          <Text color={COLOR.teal}>{tokens(s.contextTokens)}</Text>
-          <Text color={COLOR.dim}>{`/${tokens(s.contextWindow)}`}</Text>
-        </Box>
-      ) : null)}
+      {over
+        ? meter('context', COLOR.teal, ctx, (
+            <Box key="ctx-warn" gap={1}>
+              <Text bold color={COLOR.bad}>{`⚠ ${tokens(s.contextTokens ?? 0)}`}</Text>
+              <Text color={COLOR.bad}>frische Sitzung</Text>
+            </Box>
+          ), COLOR.bad)
+        : meter('context', COLOR.teal, ctx, s.contextTokens !== undefined && s.contextWindow ? (
+            <Box>
+              <Text color={COLOR.teal}>{tokens(s.contextTokens)}</Text>
+              <Text color={COLOR.dim}>{`/${tokens(s.contextWindow)}`}</Text>
+            </Box>
+          ) : null)}
     </Box>
   )
 

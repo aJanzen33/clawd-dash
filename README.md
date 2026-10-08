@@ -66,6 +66,8 @@ Run `/plugin` and you should see `clawd-dash` in the `mods active` line under th
 
 A **models** column lists the tokens each model answered with this session, subagents included, and its share of the total.
 
+Past 600k context tokens the context gauge turns red and suggests a fresh session; set **Context warning (tokens)** (`clawd-dash.contextWarnTokens`) in `/config` to move the mark, or to 0 to turn it off.
+
 To hide the animated Clawd and keep only the stats, turn off **Show Clawd** (`clawd-dash.showClawd`) in `/config`.
 
 ### Load it from a local folder

@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { columnsFor } from '../hooks/dash'
+import { columnsFor, contextOver } from '../hooks/dash'
 import { elapsed, gauge } from '../hooks/format'
 import { parseStatus } from '../hooks/git'
 import { addUsage, modelRows } from '../hooks/models'
@@ -128,4 +128,12 @@ test('past the row limit the smallest models share the last row', () => {
   expect(rows.map(r => r.name)).toEqual(['Fable 5.1', 'Opus 5.5', '+2 more'])
   expect(rows[2]!.tokens).toBe(10)
   expect(modelRows({}, 3)).toEqual([])
+})
+
+test('the context warning starts past the mark and 0 turns it off', () => {
+  const s = (contextTokens: number) => ({ added: 0, removed: 0, files: [], tools: 0, contextTokens })
+  expect(contextOver(s(600_000), 600_000)).toBe(false)
+  expect(contextOver(s(600_001), 600_000)).toBe(true)
+  expect(contextOver(s(900_000), 0)).toBe(false)
+  expect(contextOver({ added: 0, removed: 0, files: [], tools: 0 }, 600_000)).toBe(false)
 })
