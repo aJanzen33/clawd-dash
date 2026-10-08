@@ -68,7 +68,9 @@ function fromUsage(u: Omit<SessionMeasureInput, 'changed'>): Partial<Stats> {
   }
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const showClawd = options.showClawd !== false
+
   on('session.start', async ($, e, next) => {
     moodAt = Date.now()
     const [usage, model, prompts, version, git] = await Promise.all([
@@ -168,7 +170,7 @@ export const register: Register = on => {
     const { Box, Text, Image } = el
     const s = await read($, stats)
     const cols = e.viewport?.columns ?? 120
-    const showScene = cols >= MIN_COLS_FOR_SCENE
+    const showScene = showClawd && cols >= MIN_COLS_FOR_SCENE
     site = showScene ? e.requestId : undefined
     const room = cols - MODE_LABEL_COLS - (showScene ? SCENE_COLS + 2 : 0)
 

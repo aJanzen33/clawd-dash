@@ -92,3 +92,16 @@ test('every mood rasterizes to the cropped, scaled size with the mascot in it', 
     expect(orange).toBe(true)
   }
 })
+
+test('showClawd off leaves the scene out', { options: { showClawd: false } }, async $ => {
+  const ui = await $.ui.mount({
+    plugin: 'clawd-dash',
+    surface: 'terminal',
+    component: 'PromptHint',
+    props: HINT,
+    viewport: { columns: 140, rows: 40 },
+  })
+  expect(await ui.find({ type: 'Text', text: 'context' })).toBeDefined()
+  expect(await ui.find({ key: 'scene' })).toBeUndefined()
+  await ui.unmount()
+})

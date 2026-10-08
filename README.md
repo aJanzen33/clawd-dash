@@ -64,6 +64,8 @@ claude plugin install clawd-dash@pinkpixel-aja-fork
 
 Run `/plugin` and you should see `clawd-dash` in the `mods active` line under the tabs. To pick up new versions later, run `claude plugin marketplace update pinkpixel-aja-fork`.
 
+To hide the animated Clawd and keep only the stats, turn off **Show Clawd** (`clawd-dash.showClawd`) in `/config`.
+
 ### Load it from a local folder
 
 If you've cloned the repo and want to hack on it, you can load it from the folder instead. To try it for one session:

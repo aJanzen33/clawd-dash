@@ -1,8 +1,16 @@
 {
   "name": "clawd-dash",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Session dashboard under the prompt: usage limits, context, cost, model, effort, session stats, git status, file changes, and an animated Clawd.",
   "author": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
   "license": "Apache-2.0",
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "showClawd": {
+      "type": "boolean",
+      "title": "Show Clawd",
+      "description": "Draw the animated Clawd to the right of the dashboard.",
+      "default": true
+    }
+  }
 }
