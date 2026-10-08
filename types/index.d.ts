@@ -22,6 +22,8 @@ export type Stats = {
   lastTurnMs?: number
   version?: string
   git?: Git | null
+  // Tokens per answering model ("Fable 5.1"); absent in state written before 0.3.0.
+  byModel?: Record<string, number>
 }
 
 declare module 'claude-code' {

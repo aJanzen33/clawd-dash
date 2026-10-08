@@ -64,6 +64,8 @@ claude plugin install clawd-dash@pinkpixel-aja-fork
 
 Run `/plugin` and you should see `clawd-dash` in the `mods active` line under the tabs. To pick up new versions later, run `claude plugin marketplace update pinkpixel-aja-fork`.
 
+A **models** column lists the tokens each model answered with this session, subagents included, and its share of the total.
+
 To hide the animated Clawd and keep only the stats, turn off **Show Clawd** (`clawd-dash.showClawd`) in `/config`.
 
 ### Load it from a local folder

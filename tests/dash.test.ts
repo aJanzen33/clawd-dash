@@ -3,6 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import { columnsFor } from '../hooks/dash'
 import { elapsed, gauge } from '../hooks/format'
 import { parseStatus } from '../hooks/git'
+import { addUsage, modelRows } from '../hooks/models'
 import { rasterize } from '../hooks/raster'
 import { sceneSvg } from '../hooks/scene'
 
@@ -32,13 +33,15 @@ test('a wide terminal spreads the stats over three columns', async $ => {
   })
   expect(await ui.find({ key: 'limits' })).toBeDefined()
   expect(await ui.find({ key: 'session' })).toBeDefined()
+  expect(await ui.find({ key: 'models' })).toBeDefined()
   expect(await ui.find({ key: 'repo' })).toBeDefined()
   expect(await ui.find({ key: 'scene' })).toBeDefined()
   await ui.unmount()
 })
 
 test('columns drop from the right as the room shrinks', () => {
-  expect(columnsFor(200)).toBe(3)
+  expect(columnsFor(200)).toBe(4)
+  expect(columnsFor(120)).toBe(3)
   expect(columnsFor(80)).toBe(2)
   expect(columnsFor(50)).toBe(1)
 })
@@ -104,4 +107,25 @@ test('showClawd off leaves the scene out', { options: { showClawd: false } }, as
   expect(await ui.find({ type: 'Text', text: 'context' })).toBeDefined()
   expect(await ui.find({ key: 'scene' })).toBeUndefined()
   await ui.unmount()
+})
+
+test('tokens add up per model and rows come largest first', () => {
+  const u = (model: string, n: number) => ({
+    model, input_tokens: n, output_tokens: n, cache_read_input_tokens: n, cache_creation_input_tokens: n,
+  })
+  let by: Record<string, number> = {}
+  by = addUsage(by, u('claude-fable-5-1', 100))
+  by = addUsage(by, u('claude-fable-5-1[1m]', 50))
+  by = addUsage(by, u('claude-opus-5-5', 25))
+  expect(by).toEqual({ 'Fable 5.1': 600, 'Opus 5.5': 100 })
+  const rows = modelRows(by, 3)
+  expect(rows.map(r => r.name)).toEqual(['Fable 5.1', 'Opus 5.5'])
+  expect(Math.round(rows[0]!.share)).toBe(86)
+})
+
+test('past the row limit the smallest models share the last row', () => {
+  const rows = modelRows({ 'Fable 5.1': 60, 'Opus 5.5': 30, 'Haiku 5.5': 6, 'Sonnet 5.5': 4 }, 3)
+  expect(rows.map(r => r.name)).toEqual(['Fable 5.1', 'Opus 5.5', '+2 more'])
+  expect(rows[2]!.tokens).toBe(10)
+  expect(modelRows({}, 3)).toEqual([])
 })

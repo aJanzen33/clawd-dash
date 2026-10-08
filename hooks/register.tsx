@@ -3,6 +3,7 @@ import type { Register, SessionMeasureInput } from 'claude-code'
 
 import type { Limit, Mood, Stats } from '../types'
 import { columnsFor, statsGrid } from './dash'
+import { addUsage } from './models'
 import { readGit } from './git'
 import { rasterize } from './raster'
 import { DONE_SECONDS, sceneSvg } from './scene'
@@ -131,7 +132,10 @@ export const register: Register = (on, options) => {
       const effort = e.effort === undefined ? undefined : String(e.effort)
       await update($, stats, s => ({ ...s, model: e.model, effort }))
     }
-    return yield* next(e)
+    const res = yield* next(e)
+    const usage = res.usage
+    if (usage) await update($, stats, s => ({ ...s, byModel: addUsage(s.byModel ?? {}, usage) }))
+    return res
   })
 
   on('tool.call', async ($, e, next) => {

@@ -3,12 +3,14 @@ import type { Elements } from 'claude-code'
 
 import type { Limit, Stats } from '../types'
 import { COLOR, effortColor, elapsed, gauge, level, modelName, tokens, until, usd } from './format'
+import { familyColor, modelRows } from './models'
 
 type El = Elements['terminal']
 
 // Narrowest each column may get; the columns share any extra width evenly.
 const LIMITS_W = 40
 const SESSION_W = 32
+const MODELS_W = 24
 const REPO_W = 30
 const SEP_W = 3
 const BAR_CELLS = 14
@@ -16,7 +18,8 @@ const BRANCH_MAX = 22
 
 // How many stat columns fit in `cols` terminal columns.
 export function columnsFor(cols: number) {
-  if (cols >= LIMITS_W + SESSION_W + REPO_W + SEP_W * 2) return 3
+  if (cols >= LIMITS_W + SESSION_W + MODELS_W + REPO_W + SEP_W * 3) return 4
+  if (cols >= LIMITS_W + SESSION_W + MODELS_W + SEP_W * 2) return 3
   if (cols >= LIMITS_W + SESSION_W + SEP_W) return 2
   return 1
 }
@@ -103,6 +106,20 @@ export function statsGrid({ Box, Text }: El, s: Stats, columns: number, now: num
     </Box>
   )
 
+  const rows = modelRows(s.byModel ?? {}, 3)
+  const models = (
+    <Box key="models" flexDirection="column" minWidth={MODELS_W} flexGrow={1} flexShrink={0}>
+      {rows.length
+        ? rows.map(r => row(
+            `model:${r.name}`,
+            <Text bold color={familyColor(r.name)}>{r.name.padEnd(10)}</Text>,
+            <Text color={COLOR.text}>{tokens(r.tokens).padStart(5)}</Text>,
+            <Text color={COLOR.dim}>{`${Math.round(r.share)}%`.padStart(4)}</Text>,
+          ))
+        : row('model:none', <Text color={COLOR.dim}>no tokens yet</Text>)}
+    </Box>
+  )
+
   const git = s.git
   const branch = git && git.branch.length > BRANCH_MAX ? `${git.branch.slice(0, BRANCH_MAX - 1)}…` : git?.branch
   const fileCount = s.files.length
@@ -137,7 +154,9 @@ export function statsGrid({ Box, Text }: El, s: Stats, columns: number, now: num
       {columns >= 2 ? sep('sep1') : null}
       {columns >= 2 ? session : null}
       {columns >= 3 ? sep('sep2') : null}
-      {columns >= 3 ? repo : null}
+      {columns >= 3 ? models : null}
+      {columns >= 4 ? sep('sep3') : null}
+      {columns >= 4 ? repo : null}
     </Box>
   )
 }
