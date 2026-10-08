@@ -48,21 +48,21 @@ Clawd has four moods, and each one cycles through a few little scenes:
 
 ## Install
 
-This repo is also a small plugin marketplace called `pinkpixel`, so you can install it straight from GitHub. Inside Claude Code:
+This repo is also a small plugin marketplace called `pinkpixel-aja-fork` (a reviewed fork of [pinkpixel-dev/clawd-dash](https://github.com/pinkpixel-dev/clawd-dash)), so you can install it straight from GitHub. Inside Claude Code:
 
 ```
-/plugin marketplace add pinkpixel-dev/clawd-dash
-/plugin install clawd-dash@pinkpixel
+/plugin marketplace add aJanzen33/clawd-dash
+/plugin install clawd-dash@pinkpixel-aja-fork
 ```
 
 Or from your shell:
 
 ```bash
-claude plugin marketplace add pinkpixel-dev/clawd-dash
-claude plugin install clawd-dash@pinkpixel
+claude plugin marketplace add aJanzen33/clawd-dash
+claude plugin install clawd-dash@pinkpixel-aja-fork
 ```
 
-Run `/plugin` and you should see `clawd-dash` in the `mods active` line under the tabs. To pick up new versions later, run `claude plugin marketplace update pinkpixel`.
+Run `/plugin` and you should see `clawd-dash` in the `mods active` line under the tabs. To pick up new versions later, run `claude plugin marketplace update pinkpixel-aja-fork`.
 
 ### Load it from a local folder
 

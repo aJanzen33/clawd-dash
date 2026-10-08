@@ -1,7 +1,7 @@
 {
-  "name": "pinkpixel",
-  "description": "Claude Code mods by Pink Pixel",
-  "owner": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
+  "name": "pinkpixel-aja-fork",
+  "description": "Reviewed fork of the Claude Code mods by Pink Pixel",
+  "owner": { "name": "Artur Janzen", "url": "https://github.com/aJanzen33" },
   "plugins": [
     {
       "name": "clawd-dash",
