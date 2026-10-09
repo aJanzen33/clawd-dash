@@ -39,6 +39,23 @@ test('a wide terminal spreads the stats over three columns', async $ => {
   await ui.unmount()
 })
 
+test('beside a docked pane the dashboard follows its own row, not the narrower transcript', async $ => {
+  const ui = await $.ui.mount({
+    plugin: 'clawd-dash',
+    surface: 'terminal',
+    component: 'PromptHint',
+    props: HINT,
+    viewport: { columns: 60, rows: 40 },
+  })
+  expect(await ui.find({ key: 'scene' })).toBeUndefined()
+  expect(await ui.find({ key: 'session' })).toBeUndefined()
+  await ui.post({ columns: 200 })
+  expect(await ui.find({ key: 'scene' })).toBeDefined()
+  expect(await ui.find({ key: 'session' })).toBeDefined()
+  expect(await ui.find({ key: 'models' })).toBeDefined()
+  await ui.unmount()
+})
+
 test('columns drop from the right as the room shrinks', () => {
   expect(columnsFor(200)).toBe(4)
   expect(columnsFor(120)).toBe(3)

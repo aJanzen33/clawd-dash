@@ -25,9 +25,12 @@ const CROP_X = 24
 const SCALE = 4
 const SCENE_COLS = 36
 const SCENE_ROWS = 4
-const MIN_COLS_FOR_SCENE = 90
+// Row width the limits column (40) and the scene need side by side.
+const MIN_COLS_FOR_SCENE = 40 + SCENE_COLS + 2
 // Room left of the dash for Claude Code's own mode label ("auto mode on ·").
 const MODE_LABEL_COLS = 20
+// The Client in the dash's own row that reports the width the row is laid out in.
+const WIDTH_PROBE = 'width'
 // Keeps the uptime and reset countdowns current between stat changes.
 const CLOCK_MS = 15_000
 // How long the clear button waits for its second press.
@@ -41,6 +44,8 @@ const stats = atom({ plugin: 'clawd-dash', key: 'stats' } as const, { added: 0, 
 let mood: Mood = 'idle'
 let moodAt = Date.now()
 let site: string | undefined
+// The dash's row width as the probe measured it, per drawing; the window's even beside a docked pane.
+let row: { requestId: string; columns: number } | undefined
 
 function setMood(next: Mood) {
   if (next === mood) return
@@ -195,38 +200,53 @@ export const register: Register = (on, options) => {
     return res
   })
 
+  on('ui.message', async ($, e, next) => {
+    const cols = (e.data as { columns?: unknown } | null)?.columns
+    if (e.element === WIDTH_PROBE && typeof cols === 'number' && (row?.requestId !== e.requestId || row.columns !== cols)) {
+      row = { requestId: e.requestId, columns: cols }
+      $.ui.invalidate('ui.render')
+    }
+    return next(e)
+  })
+
   on('ui.render', { component: SITE }, async ($, e, next) => {
     if (e.surface !== 'terminal') return next(e)
     const el = $.ui.resolve(e)
-    const { Box, Button, Text, Image } = el
+    const { Box, Button, Client, Text, Image } = el
     const s = await read($, stats)
-    const cols = e.viewport?.columns ?? 120
+    // The viewport is the transcript's width, narrower than this row beside a docked pane;
+    // the probe's measure is the row's own, so the wider of the two counts.
+    const measured = row?.requestId === e.requestId ? row.columns : 0
+    const cols = Math.max((e.viewport?.columns ?? 120) - MODE_LABEL_COLS, measured)
     const showScene = showClawd && cols >= MIN_COLS_FOR_SCENE
     site = showScene ? e.requestId : undefined
-    const room = cols - MODE_LABEL_COLS - (showScene ? SCENE_COLS + 2 : 0)
+    const room = cols - (showScene ? SCENE_COLS + 2 : 0)
 
     return (
-      <Box flexDirection="row" gap={2}>
-        <Box flexDirection="column" flexGrow={1} flexShrink={1}>
-          {statsGrid(el, s, columnsFor(room), Date.now(), warnTokens)}
-          <Box flexDirection="row" columnGap={2}>
-            <Box flexShrink={1}>
-              <Text dimColor wrap="truncate">{e.props.hint}</Text>
+      <Box flexDirection="column" flexGrow={1}>
+        <Client key={WIDTH_PROBE} module="./width.tsx" width="100%" />
+        <Box flexDirection="row" gap={2}>
+          <Box flexDirection="column" flexGrow={1} flexShrink={1}>
+            {statsGrid(el, s, columnsFor(room), Date.now(), warnTokens)}
+            <Box flexDirection="row" columnGap={2}>
+              <Box flexShrink={1}>
+                <Text dimColor wrap="truncate">{e.props.hint}</Text>
+              </Box>
+              {clearButton === 'off' ? null : (
+                <Button
+                  key="clear"
+                  label={isClearArmed ? 'clear? click again' : '⌫ clear'}
+                  plain
+                  {...(isClearArmed ? {} : { dimColor: true })}
+                  onPress={() => void pressClear($)}
+                />
+              )}
             </Box>
-            {clearButton === 'off' ? null : (
-              <Button
-                key="clear"
-                label={isClearArmed ? 'clear? click again' : '⌫ clear'}
-                plain
-                {...(isClearArmed ? {} : { dimColor: true })}
-                onPress={() => void pressClear($)}
-              />
-            )}
           </Box>
+          {showScene ? (
+            <Image key="scene" source={frame()} columns={SCENE_COLS} rows={SCENE_ROWS} alt={`clawd ${mood}`} />
+          ) : null}
         </Box>
-        {showScene ? (
-          <Image key="scene" source={frame()} columns={SCENE_COLS} rows={SCENE_ROWS} alt={`clawd ${mood}`} />
-        ) : null}
       </Box>
     )
   })

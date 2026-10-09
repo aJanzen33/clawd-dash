@@ -1,6 +1,6 @@
 {
   "name": "clawd-dash",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Session dashboard under the prompt: usage limits, context, cost, model, effort, session stats, git status, file changes, and an animated Clawd.",
   "author": { "name": "Pink Pixel", "email": "admin@pinkpixel.dev", "url": "https://pinkpixel.dev" },
   "license": "Apache-2.0",

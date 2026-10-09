@@ -100,7 +100,8 @@ To turn it off, remove the folder from that setting, or start Claude Code with `
 - Effort shows up after your first message, since it comes from the first model request.
 - The file change and tool call counters start over whenever the mod reloads (for example, while you're editing it).
 - The tool call count includes calls made by subagents.
-- On terminals narrower than 90 columns, the crab hides and the stats stay.
+- When the dashboard's row is narrower than 78 columns, the crab hides and the stats stay.
+- A pane docked beside the transcript doesn't shrink the dashboard: it measures its own row, which keeps the window's width.
 - The dashboard only draws in the terminal. In the Desktop app and the VS Code panel, you get the normal hint line.
 
 ## How it works
@@ -109,6 +110,7 @@ The mod is a few small TypeScript files in `hooks/`:
 
 - `register.tsx` hooks into Claude Code's events. `session.measure` feeds the usage numbers, `turn.start` and `turn.complete` switch the mood and update the prompt count, last turn time, and git status, `turn.step` picks up the model and effort, and `tool.call` counts tool calls and lines from edit results. A `ui.render` hook on `PromptHint` draws the dashboard in the hint row under the prompt.
 - `dash.tsx` builds the three stat columns and decides how many fit.
+- `width.tsx` is an invisible `Client` in the dashboard's row that reports the width the row is laid out in. The render hook's viewport is the transcript's width, which a docked pane narrows; the row under the prompt keeps the window's.
 - `git.ts` runs `git status` and reads the branch, ahead/behind counts, and changed files out of it.
 - `scene.ts` draws each animation frame of a mood as a 100x18 pixel SVG.
 - `raster.ts` turns that SVG into RGBA pixels, crops off the mostly empty left side, and scales it up 4x so it stays crisp. The terminal can't draw SVG, but it can draw an `Image`.
