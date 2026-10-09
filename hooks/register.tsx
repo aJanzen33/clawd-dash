@@ -3,6 +3,7 @@ import type { EngineInterface, Register, SessionMeasureInput } from 'claude-code
 
 import type { Limit, Mood, Stats } from '../types'
 import { columnsFor, statsGrid } from './dash'
+import { COLOR } from './format'
 import { addUsage } from './models'
 import { readGit } from './git'
 import { rasterize } from './raster'
@@ -233,13 +234,11 @@ export const register: Register = (on, options) => {
                 <Text dimColor wrap="truncate">{e.props.hint}</Text>
               </Box>
               {clearButton === 'off' ? null : (
-                <Button
-                  key="clear"
-                  label={isClearArmed ? 'clear? click again' : '⌫ clear'}
-                  plain
-                  {...(isClearArmed ? {} : { dimColor: true })}
-                  onPress={() => void pressClear($)}
-                />
+                <Button key="clear" plain onPress={() => void pressClear($)}>
+                  <Text color={isClearArmed ? COLOR.bad : COLOR.rose} bold={isClearArmed}>
+                    {isClearArmed ? 'clear? click again' : '⌫ clear'}
+                  </Text>
+                </Button>
               )}
             </Box>
           </Box>
